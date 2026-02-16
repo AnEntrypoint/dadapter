@@ -31,7 +31,7 @@ export default async function onMessages(messages, chatContent, acp) {
   
   try {
     const result = await acp.process(chatContent, {
-      cli: 'opencode',
+      cli: 'kilo',
       instruction: acp.instruction
     });
     console.log('Process result:', result);
