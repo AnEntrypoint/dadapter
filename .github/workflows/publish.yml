@@ -9,8 +9,12 @@ on:
 jobs:
   publish:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -27,7 +31,8 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           npm version patch --no-git-tag-version
           git add package.json package-lock.json
-          git commit -m "Auto-bump version [skip ci]"
+          git commit -m "Auto-bump version [skip ci]" || echo "No changes to commit"
+          git pull --rebase origin main
           git push
 
       - name: Publish to npm
