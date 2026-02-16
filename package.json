@@ -1,6 +1,6 @@
 {
   "name": "dadapter",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "type": "module",
   "dependencies": {
     "discord.js": "^14.14.1",
