@@ -1,10 +1,10 @@
 {
-  "name": "discord-debounce-bot",
+  "name": "dadapter",
   "version": "1.0.0",
   "type": "module",
   "dependencies": {
     "discord.js": "^14.14.1",
     "dotenv": "^16.3.1",
-    "acpreact": "AnEntrypoint/acpreact"
+    "acpreact": "github:AnEntrypoint/acpreact"
   }
 }

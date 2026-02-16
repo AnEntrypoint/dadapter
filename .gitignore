@@ -15,3 +15,5 @@ yarn-error.log*
 .cache/
 dist/
 build/
+
+.code-search/

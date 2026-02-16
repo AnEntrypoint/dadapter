@@ -31,7 +31,7 @@ async function loadHandler() {
 function formatChat(messages) {
   return messages.map(m => {
     const time = new Date(m.timestamp).toTimeString().slice(0, 5);
-    return '[${time}] ${m.author}: ${m.content}';
+    return `[${time}] ${m.author}: ${m.content}`;
   }).join('\n');
 }
 
