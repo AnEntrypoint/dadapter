@@ -59,11 +59,37 @@ function onMessage(acp) {
   };
 }
 
+async function sendMessage(channelId, content) {
+  if (!client) return;
+  try {
+    const channel = await client.channels.fetch(channelId);
+    if (channel) {
+      await channel.send(content);
+      return { success: true };
+    }
+  } catch (e) {
+    console.error('Failed to send message:', e.message);
+    return { success: false, error: e.message };
+  }
+}
+
 async function start() {
   if (isRunning) return;
   await loadHandler();
   
-  const acp = new ACPProtocol('You are a helpful Discord bot assistant. Analyze chat logs and use available tools to assist users.');
+  const instruction = 'You are a witty Discord bot with a great sense of humor. Analyze the chat logs and decide when to tell a relevant joke. Only tell jokes when:
+' +
+    '- The conversation is light-hearted or casual
+' +
+    '- Someone mentions something joke-worthy (puns, wordplay opportunities)
+' +
+    '- The mood could use some humor
+' +
+    '- Never tell jokes during serious discussions, arguments, or when someone needs help
+' +
+    '- Use the tellRelevantJoke tool when you decide a joke is appropriate';
+  
+  const acp = new ACPProtocol(instruction);
   
   client = new Client({
     intents: [
@@ -105,7 +131,8 @@ global.discordBot = {
   start, 
   stop, 
   getPending: () => pendingMessages, 
-  reload: loadHandler
+  reload: loadHandler,
+  sendMessage
 };
 
 start().catch(e => {
