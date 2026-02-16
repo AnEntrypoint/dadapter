@@ -15,8 +15,6 @@ let messageHandler = null;
 let client = null;
 let isRunning = false;
 
-const acp = new ACPProtocol();
-
 async function loadHandler() {
   try {
     const modulePath = pathToFileURL(process.cwd() + '/handler.js').href;
@@ -37,7 +35,7 @@ function formatChat(messages) {
   }).join('\n');
 }
 
-function processBatch() {
+function processBatch(acp) {
   if (pendingMessages.length === 0 || !messageHandler) return;
   const batch = pendingMessages.splice(0, pendingMessages.length);
   const chatContent = formatChat(batch);
@@ -46,22 +44,26 @@ function processBatch() {
     .catch(e => console.error('Handler error:', e.message));
 }
 
-function onMessage(message) {
-  if (message.author.bot) return;
-  pendingMessages.push({
-    id: message.id,
-    content: message.content,
-    author: message.author.tag,
-    channelId: message.channelId,
-    timestamp: Date.now()
-  });
-  if (debounceTimer) clearTimeout(debounceTimer);
-  debounceTimer = setTimeout(processBatch, DEBOUNCE_MS);
+function onMessage(acp) {
+  return function(message) {
+    if (message.author.bot) return;
+    pendingMessages.push({
+      id: message.id,
+      content: message.content,
+      author: message.author.tag,
+      channelId: message.channelId,
+      timestamp: Date.now()
+    });
+    if (debounceTimer) clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => processBatch(acp), DEBOUNCE_MS);
+  };
 }
 
 async function start() {
   if (isRunning) return;
   await loadHandler();
+  
+  const acp = new ACPProtocol('You are a helpful Discord bot assistant. Analyze chat logs and use available tools to assist users.');
   
   client = new Client({
     intents: [
@@ -76,7 +78,7 @@ async function start() {
     isRunning = true;
   });
 
-  client.on(Events.MessageCreate, onMessage);
+  client.on(Events.MessageCreate, onMessage(acp));
   client.on(Events.Error, error => console.error('Discord error:', error.message));
 
   await client.login(TOKEN);
@@ -103,8 +105,7 @@ global.discordBot = {
   start, 
   stop, 
   getPending: () => pendingMessages, 
-  reload: loadHandler,
-  getAcp: () => acp
+  reload: loadHandler
 };
 
 start().catch(e => {
