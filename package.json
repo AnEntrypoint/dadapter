@@ -3,8 +3,8 @@
   "version": "1.0.2",
   "type": "module",
   "dependencies": {
+    "acpreact": "^1.0.4",
     "discord.js": "^14.14.1",
-    "dotenv": "^16.3.1",
-    "acpreact": "^1.0.0"
+    "dotenv": "^16.3.1"
   }
 }
