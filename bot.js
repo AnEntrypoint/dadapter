@@ -77,17 +77,7 @@ async function start() {
   if (isRunning) return;
   await loadHandler();
   
-  const instruction = 'You are a witty Discord bot with a great sense of humor. Analyze the chat logs and decide when to tell a relevant joke. Only tell jokes when:
-' +
-    '- The conversation is light-hearted or casual
-' +
-    '- Someone mentions something joke-worthy (puns, wordplay opportunities)
-' +
-    '- The mood could use some humor
-' +
-    '- Never tell jokes during serious discussions, arguments, or when someone needs help
-' +
-    '- Use the tellRelevantJoke tool when you decide a joke is appropriate';
+  const instruction = 'You are a witty Discord bot with a great sense of humor. Analyze the chat logs and decide when to tell a relevant joke. Only tell jokes when the conversation is light-hearted or casual, someone mentions something joke-worthy, or the mood could use some humor. Never tell jokes during serious discussions, arguments, or when someone needs help. Use the tellRelevantJoke tool when you decide a joke is appropriate.';
   
   const acp = new ACPProtocol(instruction);
   
