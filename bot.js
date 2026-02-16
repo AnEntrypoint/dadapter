@@ -2,7 +2,7 @@ import { Client, Events, GatewayIntentBits } from 'discord.js';
 import { config } from 'dotenv';
 import { watchFile } from 'fs';
 import { pathToFileURL } from 'url';
-import { processChat, ACPProtocol, createSimulativeRetriever } from 'acpreact';
+import { ACPProtocol } from 'acpreact';
 
 config();
 
@@ -42,7 +42,7 @@ function processBatch() {
   const batch = pendingMessages.splice(0, pendingMessages.length);
   const chatContent = formatChat(batch);
   
-  Promise.resolve(messageHandler(batch, chatContent, { processChat, acp, createSimulativeRetriever }))
+  Promise.resolve(messageHandler(batch, chatContent, acp))
     .catch(e => console.error('Handler error:', e.message));
 }
 
