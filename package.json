@@ -1,0 +1,10 @@
+{
+  "name": "discord-debounce-bot",
+  "version": "1.0.0",
+  "type": "module",
+  "dependencies": {
+    "discord.js": "^14.14.1",
+    "dotenv": "^16.3.1",
+    "acpreact": "^1.0.0"
+  }
+}

@@ -1,0 +1,113 @@
+import { Client, Events, GatewayIntentBits } from 'discord.js';
+import { config } from 'dotenv';
+import { watchFile } from 'fs';
+import { pathToFileURL } from 'url';
+import { processChat, ACPProtocol, createSimulativeRetriever } from 'acpreact';
+
+config();
+
+const DEBOUNCE_MS = 10000;
+const TOKEN = process.env.DISCORD_BOT_TOKEN;
+
+let debounceTimer = null;
+let pendingMessages = [];
+let messageHandler = null;
+let client = null;
+let isRunning = false;
+
+const acp = new ACPProtocol();
+
+async function loadHandler() {
+  try {
+    const modulePath = pathToFileURL(process.cwd() + '/handler.js').href;
+    const freshModule = await import(modulePath + '?t=' + Date.now());
+    messageHandler = freshModule.default || freshModule.onMessages;
+    console.log('Handler reloaded at ' + new Date().toISOString());
+    return true;
+  } catch (e) {
+    console.error('Handler load failed:', e.message);
+    return false;
+  }
+}
+
+function formatChat(messages) {
+  return messages.map(m => {
+    const time = new Date(m.timestamp).toTimeString().slice(0, 5);
+    return '[${time}] ${m.author}: ${m.content}';
+  }).join('\n');
+}
+
+function processBatch() {
+  if (pendingMessages.length === 0 || !messageHandler) return;
+  const batch = pendingMessages.splice(0, pendingMessages.length);
+  const chatContent = formatChat(batch);
+  
+  Promise.resolve(messageHandler(batch, chatContent, { processChat, acp, createSimulativeRetriever }))
+    .catch(e => console.error('Handler error:', e.message));
+}
+
+function onMessage(message) {
+  if (message.author.bot) return;
+  pendingMessages.push({
+    id: message.id,
+    content: message.content,
+    author: message.author.tag,
+    channelId: message.channelId,
+    timestamp: Date.now()
+  });
+  if (debounceTimer) clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(processBatch, DEBOUNCE_MS);
+}
+
+async function start() {
+  if (isRunning) return;
+  await loadHandler();
+  
+  client = new Client({
+    intents: [
+      GatewayIntentBits.Guilds,
+      GatewayIntentBits.GuildMessages,
+      GatewayIntentBits.MessageContent
+    ]
+  });
+
+  client.once(Events.ClientReady, () => {
+    console.log('Bot logged in as ' + client.user.tag);
+    isRunning = true;
+  });
+
+  client.on(Events.MessageCreate, onMessage);
+  client.on(Events.Error, error => console.error('Discord error:', error.message));
+
+  await client.login(TOKEN);
+}
+
+async function stop() {
+  if (debounceTimer) {
+    clearTimeout(debounceTimer);
+    debounceTimer = null;
+  }
+  if (client) {
+    await client.destroy();
+    client = null;
+  }
+  isRunning = false;
+  console.log('Bot stopped');
+}
+
+watchFile('handler.js', async () => {
+  if (isRunning) await loadHandler();
+});
+
+global.discordBot = { 
+  start, 
+  stop, 
+  getPending: () => pendingMessages, 
+  reload: loadHandler,
+  getAcp: () => acp
+};
+
+start().catch(e => {
+  console.error('Fatal:', e.message);
+  process.exit(1);
+});
