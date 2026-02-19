@@ -35,28 +35,40 @@ function formatChat(messages) {
   }).join('\n');
 }
 
-function processBatch(acp) {
+async function processBatch() {
   if (pendingMessages.length === 0 || !messageHandler) return;
   const batch = pendingMessages.splice(0, pendingMessages.length);
   const chatContent = formatChat(batch);
+  
+  const acp = new ACPProtocol('You are memobot, a witty Discord bot. Always use the reply tool to respond to users.');
+  
+  const channelId = batch[0]?.channelId;
+  
+  acp.registerTool('reply',
+    'Send a reply message to the Discord channel.',
+    { type: 'object', properties: { message: { type: 'string', description: 'The message to send' } }, required: ['message'] },
+    async (params) => {
+      console.log('Reply tool called:', params.message);
+      await sendMessage(channelId, params.message);
+      return { success: true };
+    }
+  );
   
   Promise.resolve(messageHandler(batch, chatContent, acp))
     .catch(e => console.error('Handler error:', e.message));
 }
 
-function onMessage(acp) {
-  return function(message) {
-    if (message.author.bot) return;
-    pendingMessages.push({
-      id: message.id,
-      content: message.content,
-      author: message.author.tag,
-      channelId: message.channelId,
-      timestamp: Date.now()
-    });
-    if (debounceTimer) clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(() => processBatch(acp), DEBOUNCE_MS);
-  };
+function onMessage(message) {
+  if (message.author.bot) return;
+  pendingMessages.push({
+    id: message.id,
+    content: message.content,
+    author: message.author.tag,
+    channelId: message.channelId,
+    timestamp: Date.now()
+  });
+  if (debounceTimer) clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(() => processBatch(), DEBOUNCE_MS);
 }
 
 async function sendMessage(channelId, content) {
@@ -76,11 +88,7 @@ async function sendMessage(channelId, content) {
 async function start() {
   if (isRunning) return;
   await loadHandler();
-  
-  const instruction = 'You are a witty Discord bot with a great sense of humor. Analyze the chat logs and decide when to tell a relevant joke. Only tell jokes when the conversation is light-hearted or casual, someone mentions something joke-worthy, or the mood could use some humor. Never tell jokes during serious discussions, arguments, or when someone needs help. Use the tellRelevantJoke tool when you decide a joke is appropriate.';
-  
-  const acp = new ACPProtocol(instruction);
-  
+
   client = new Client({
     intents: [
       GatewayIntentBits.Guilds,
@@ -94,7 +102,7 @@ async function start() {
     isRunning = true;
   });
 
-  client.on(Events.MessageCreate, onMessage(acp));
+  client.on(Events.MessageCreate, onMessage);
   client.on(Events.Error, error => console.error('Discord error:', error.message));
 
   await client.login(TOKEN);
