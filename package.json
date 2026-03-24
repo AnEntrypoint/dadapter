@@ -1,10 +1,11 @@
 {
   "name": "dadapter",
-  "version": "1.0.3",
+  "version": "1.1.0",
   "type": "module",
+  "main": "index.js",
+  "description": "Discord adapter powered by acpreact",
   "dependencies": {
-    "acpreact": "^1.0.4",
-    "discord.js": "^14.14.1",
+    "acpreact": "^1.2.0",
     "dotenv": "^16.3.1"
   }
 }
